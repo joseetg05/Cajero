@@ -1,0 +1,7 @@
+.agent/
+openspec/
+temp_specs.json
+temp_proposal_inst.json
+temp_design.json
+temp_proposal_inst_utf8.json
+temp_tasks.json
