@@ -15,9 +15,6 @@ const login = async (req, res) => {
             .input('PIN', sql.VarChar, pin)
             .execute('sp_LoginCajero');
 
-        // sp_LoginCajero returns the output variables as part of the recordset or output. 
-        // Need to check how sp returns it (e.g. RECORDSET with Exito, Mensaje, IdCuenta)
-        // Usually it's the first recordset row.
         const record = result.recordset[0];
 
         if (!record) {
