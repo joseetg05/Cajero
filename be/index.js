@@ -8,6 +8,9 @@ app.use(express.json());
 const authRoutes = require('./src/routes/auth');
 app.use('/api/auth', authRoutes);
 
+const atmRoutes = require('./src/routes/atm');
+app.use('/api/atm', atmRoutes);
+
 app.get('/', (req, res) => {
     res.json({ message: 'Conectado' });
 });
