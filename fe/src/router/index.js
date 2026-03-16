@@ -1,10 +1,12 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import LoginView from '../views/LoginView.vue'
 
+import DashboardView from '../views/Dashboard.vue'
+
 const routes = [
   { path: '/', redirect: '/login' },
   { path: '/login', component: LoginView },
-  { path: '/dashboard', component: { template: '<div>Dashboard Placeholder (En Construcción)</div>' } }
+  { path: '/dashboard', component: DashboardView }
 ]
 
 const router = createRouter({
