@@ -1,10 +1,10 @@
 import { createRouter, createWebHistory } from 'vue-router'
-
-// Podemos usar una vista por defecto o de prueba
-const Home = { template: '<div>Home / Componente por Configurar</div>' }
+import LoginView from '../views/LoginView.vue'
 
 const routes = [
-  { path: '/', component: Home }
+  { path: '/', redirect: '/login' },
+  { path: '/login', component: LoginView },
+  { path: '/dashboard', component: { template: '<div>Dashboard Placeholder (En Construcción)</div>' } }
 ]
 
 const router = createRouter({
