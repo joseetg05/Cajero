@@ -1,0 +1,80 @@
+﻿{
+  "changeName": "tiquete-ft-01",
+  "changeDir": "C:\\Users\\jtorr\\Documents\\CUC\\Fundamentos BD\\Cajero\\openspec\\changes\\tiquete-ft-01",
+  "schemaName": "spec-driven",
+  "contextFiles": {
+    "proposal": "C:\\Users\\jtorr\\Documents\\CUC\\Fundamentos BD\\Cajero\\openspec\\changes\\tiquete-ft-01\\proposal.md",
+    "specs": "C:\\Users\\jtorr\\Documents\\CUC\\Fundamentos BD\\Cajero\\openspec\\changes\\tiquete-ft-01\\specs\\**\\*.md",
+    "design": "C:\\Users\\jtorr\\Documents\\CUC\\Fundamentos BD\\Cajero\\openspec\\changes\\tiquete-ft-01\\design.md",
+    "tasks": "C:\\Users\\jtorr\\Documents\\CUC\\Fundamentos BD\\Cajero\\openspec\\changes\\tiquete-ft-01\\tasks.md"
+  },
+  "progress": {
+    "total": 12,
+    "complete": 0,
+    "remaining": 12
+  },
+  "tasks": [
+    {
+      "id": "1",
+      "description": "1.1 Ejecutar `npm create vite@latest fe -- --template vue` desde el directorio ra├¡z del proyecto",
+      "done": false
+    },
+    {
+      "id": "2",
+      "description": "1.2 Navegar a la carpeta `fe/` e instalar las dependencias generadas por la plantilla (`npm install`)",
+      "done": false
+    },
+    {
+      "id": "3",
+      "description": "2.1 Estando en `fe/`, instalar Vue Router 4: `npm install vue-router@4`",
+      "done": false
+    },
+    {
+      "id": "4",
+      "description": "2.2 Instalar Pinia para el gestor de estados: `npm install pinia`",
+      "done": false
+    },
+    {
+      "id": "5",
+      "description": "2.3 Instalar Axios para peticiones HTTP: `npm install axios`",
+      "done": false
+    },
+    {
+      "id": "6",
+      "description": "3.1 Crear `fe/src/router/index.js` y definir al menos un placeholder de ruta inicial (Ej: `{ path: '/', component: Home }`)",
+      "done": false
+    },
+    {
+      "id": "7",
+      "description": "3.2 Crear `fe/src/stores` y dentro de ├⌐l un archivo `auth.js` declarando el almac├⌐n `useAuthStore` bajo Pinia que contenga el `token` y m├⌐todos `setToken`",
+      "done": false
+    },
+    {
+      "id": "8",
+      "description": "3.3 Modificar `fe/src/main.js` para que importe las instancias de router y pinia (Ej. `createPinia()`) y las integre con `app.use()`",
+      "done": false
+    },
+    {
+      "id": "9",
+      "description": "4.1 Crear un archivo de utiler├¡a HTTP en `fe/src/services/api.js` o similar",
+      "done": false
+    },
+    {
+      "id": "10",
+      "description": "4.2 Instanciar `axios.create()` con una URL base correspondiente al backend",
+      "done": false
+    },
+    {
+      "id": "11",
+      "description": "4.3 Configurar un `api.interceptors.request.use()` que lea el estado actual del `token` en localStorage o en el Store, insert├índolo si existe como `Bearer <token>` dentro del header `Authorization`",
+      "done": false
+    },
+    {
+      "id": "12",
+      "description": "5.1 Remover el boilerpate excesivo (`HelloWorld.vue` u hojas de estilo grandes por defecto) del Template Vue si as├¡ se define, dejando una interfaz limpia para arrancar Tiquetes futuros.",
+      "done": false
+    }
+  ],
+  "state": "ready",
+  "instruction": "Read context files, work through pending tasks, mark complete as you go.\nPause if you hit blockers or need clarification."
+}
