@@ -23,9 +23,11 @@ import { useRouter } from 'vue-router'
 const router = useRouter()
 
 const handleAction = (action) => {
-  console.log('Acción seleccionada:', action)
-  // Dependiendo del flujo futuro, aquí se redirigiría
-  // router.push(`/${action}`) 
+  if (action === 'movimientos') {
+    router.push('/movimientos')
+  } else {
+    console.log('Acción seleccionada:', action)
+  }
 }
 </script>
 
