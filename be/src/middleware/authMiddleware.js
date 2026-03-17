@@ -10,7 +10,12 @@ const authMiddleware = (req, res, next) => {
 
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        req.user = { IdCuenta: decoded.IdCuenta }; // Adjunta ID de cuenta para uso en controladores
+        // Adjunta datos de cuenta y credenciales para uso en controladores (ej: sp_ConsultarSaldo)
+        req.user = { 
+            IdCuenta: decoded.IdCuenta,
+            tarjeta: decoded.tarjeta,
+            pin: decoded.pin
+        }; 
         next();
     } catch (error) {
         return res.status(401).json({ error: 'Token inválido o expirado.' });

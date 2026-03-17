@@ -11,62 +11,42 @@ const authStore = useAuthStore()
 const tarjeta = ref('')
 const pin = ref('')
 const errorMessage = ref('')
-const activeField = ref('tarjeta') // Puede ser 'tarjeta' o 'pin'
+const activeField = ref('tarjeta')
 const loading = ref(false)
 
 const handleKeypadPress = (key) => {
   if (key === 'Limpiar') {
     if (activeField.value === 'tarjeta') tarjeta.value = ''
-    if (activeField.value === 'pin') pin.value = ''
+    else pin.value = ''
     return
   }
-
   if (key === 'Borrar') {
-    if (activeField.value === 'tarjeta') {
-      tarjeta.value = tarjeta.value.slice(0, -1)
-    } else {
-      pin.value = pin.value.slice(0, -1)
-    }
+    if (activeField.value === 'tarjeta') tarjeta.value = tarjeta.value.slice(0, -1)
+    else pin.value = pin.value.slice(0, -1)
     return
   }
-
-  // Ingresar números
-  if (activeField.value === 'tarjeta' && tarjeta.value.length < 16) {
+  if (activeField.value === 'tarjeta' && tarjeta.value.length < 8) {
     tarjeta.value += key
+    if (tarjeta.value.length === 8) activeField.value = 'pin'
   } else if (activeField.value === 'pin' && pin.value.length < 4) {
     pin.value += key
   }
 }
 
 const login = async () => {
-  if (tarjeta.value.length !== 16 || pin.value.length !== 4) {
-    errorMessage.value = 'Ingrese los 16 dígitos de la tarjeta y los 4 dígitos del PIN.'
+  if (tarjeta.value.length !== 8 || pin.value.length !== 4) {
+    errorMessage.value = 'Ingrese los 8 dígitos de la tarjeta y los 4 dígitos del PIN.'
     return
   }
-
   loading.value = true
   errorMessage.value = ''
-
   try {
-    const response = await api.post('/auth/login', {
-      tarjeta: tarjeta.value,
-      pin: pin.value
-    })
-
-    // Éxito:
-    const data = response.data
-    authStore.setToken(data.token)
-    authStore.setIdCuenta(data.idCuenta)
-    
-    // Navegar al dashboard
+    const response = await api.post('/auth/login', { tarjeta: tarjeta.value, pin: pin.value })
+    authStore.setToken(response.data.token)
+    authStore.setIdCuenta(response.data.idCuenta)
     router.push('/dashboard')
-
   } catch (error) {
-    if (error.response && error.response.data && error.response.data.error) {
-      errorMessage.value = error.response.data.error
-    } else {
-      errorMessage.value = 'Error de conexión con el servidor.'
-    }
+    errorMessage.value = error.response?.data?.error || 'Error de conexión con el servidor.'
   } finally {
     loading.value = false
   }
@@ -74,152 +54,205 @@ const login = async () => {
 </script>
 
 <template>
-  <div class="login-view">
-    <div class="atm-screen">
-      <h1>Cajero Automático Virtual</h1>
-      
-      <div v-if="errorMessage" class="error-banner">
-        {{ errorMessage }}
+  <div class="page">
+    <!-- Header del banco -->
+    <header class="bank-header">
+      <div class="bank-name">BancoCUC</div>
+      <div class="atm-label">CAJERO AUTOMÁTICO</div>
+    </header>
+
+    <div class="atm-container">
+      <!-- Pantalla -->
+      <div class="atm-screen">
+        <h2 class="screen-title">Bienvenido</h2>
+        <p class="screen-subtitle">Inserte sus datos para continuar</p>
+
+        <div v-if="errorMessage" class="error-box">
+          {{ errorMessage }}
+        </div>
+
+        <div class="fields-area">
+          <div class="field-item" :class="{ active: activeField === 'tarjeta' }" @click="activeField = 'tarjeta'">
+            <label>Número de Tarjeta</label>
+            <div class="field-value">
+              {{ tarjeta || '_ _ _ _ _ _ _ _' }}
+            </div>
+          </div>
+
+          <div class="field-item" :class="{ active: activeField === 'pin' }" @click="activeField = 'pin'">
+            <label>PIN</label>
+            <div class="field-value">
+              {{ pin.length ? '●'.repeat(pin.length) + '_'.repeat(4 - pin.length) : '_ _ _ _' }}
+            </div>
+          </div>
+        </div>
+
+        <button class="confirm-btn" @click="login" :disabled="loading">
+          {{ loading ? 'Verificando...' : 'Ingresar' }}
+        </button>
       </div>
 
-      <form @submit.prevent="login" class="login-form">
-        <div class="input-group" :class="{ active: activeField === 'tarjeta' }" @click="activeField = 'tarjeta'">
-          <label for="tarjeta">Número de Tarjeta (16 dígitos)</label>
-          <input 
-            id="tarjeta"
-            type="text" 
-            v-model="tarjeta" 
-            maxlength="16" 
-            readonly
-            placeholder="0000 0000 0000 0000"
-          />
-        </div>
-
-        <div class="input-group" :class="{ active: activeField === 'pin' }" @click="activeField = 'pin'">
-          <label for="pin">PIN de Seguridad (4 dígitos)</label>
-          <input 
-            id="pin"
-            type="password" 
-            v-model="pin" 
-            maxlength="4" 
-            readonly
-            placeholder="****"
-          />
-        </div>
-
-        <button type="submit" class="submit-btn" :disabled="loading">
-          {{ loading ? 'Procesando...' : 'Ingresar' }}
-        </button>
-      </form>
+      <!-- Teclado físico -->
+      <div class="keypad-panel">
+        <NumericKeypad @press="handleKeypadPress" />
+      </div>
     </div>
 
-    <!-- Teclado en pantalla (Simulando hardware ATM) -->
-    <div class="hardware-panel">
-      <NumericKeypad @press="handleKeypadPress" />
-    </div>
+    <footer class="atm-footer">
+      BancoCUC
+    </footer>
   </div>
 </template>
 
 <style scoped>
-.login-view {
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+* { box-sizing: border-box; }
+
+.page {
+  min-height: 100vh;
+  background: #e8ecf0;
   display: flex;
   flex-direction: column;
-  justify-content: center;
   align-items: center;
-  min-height: 100vh;
-  background-color: #2c3e50;
-  color: white;
-  padding: 20px;
+  justify-content: center;
+  padding: 1.5rem;
+  font-family: 'Inter', sans-serif;
 }
 
+/* Header */
+.bank-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  max-width: 580px;
+  background: #1a3a5c;
+  color: white;
+  padding: 0.85rem 1.5rem;
+  border-radius: 12px 12px 0 0;
+}
+
+.bank-name { font-size: 1.1rem; font-weight: 700; letter-spacing: 0.5px; }
+.atm-label { font-size: 0.7rem; letter-spacing: 2px; opacity: 0.7; }
+
+/* Contenedor principal */
+.atm-container {
+  width: 100%;
+  max-width: 580px;
+  background: #f5f5f5;
+  border: 1px solid #ccc;
+  border-top: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* Pantalla */
 .atm-screen {
-  background-color: #ecf0f1;
-  color: #2c3e50;
-  width: 100%;
-  max-width: 400px;
-  border-radius: 12px;
-  padding: 30px 20px;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-  margin-bottom: 30px;
-  border: 8px solid #34495e;
-}
-
-h1 {
-  text-align: center;
-  font-size: 1.5rem;
-  margin-bottom: 20px;
-  color: #0352ba;
-}
-
-.error-banner {
-  background-color: #ffcdd2;
-  color: #c62828;
-  padding: 10px;
-  border-radius: 4px;
-  margin-bottom: 15px;
-  text-align: center;
-  font-weight: bold;
-}
-
-.input-group {
-  margin-bottom: 15px;
   background: white;
-  padding: 10px;
-  border-radius: 6px;
-  border: 2px solid transparent;
-  cursor: pointer;
+  border-bottom: 3px solid #1a3a5c;
+  padding: 1.75rem 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
 }
 
-.input-group.active {
-  border-color: #3498db;
-  box-shadow: 0 0 5px rgba(52, 152, 219, 0.5);
-}
-
-.input-group label {
-  display: block;
-  font-size: 0.85rem;
-  color: #7f8c8d;
-  margin-bottom: 5px;
-}
-
-.input-group input {
-  width: 100%;
-  border: none;
+.screen-title {
   font-size: 1.4rem;
-  color: #2c3e50;
-  outline: none;
-  background: transparent;
-  letter-spacing: 2px;
+  font-weight: 700;
+  color: #1a3a5c;
+  margin: 0;
 }
 
-.submit-btn {
-  width: 100%;
-  padding: 15px;
-  background-color: #27ae60;
+.screen-subtitle {
+  color: #666;
+  font-size: 0.9rem;
+  margin: -0.6rem 0 0;
+}
+
+.error-box {
+  background: #fff3f3;
+  border: 1px solid #e57373;
+  border-left: 4px solid #d32f2f;
+  color: #b71c1c;
+  padding: 0.65rem 0.9rem;
+  border-radius: 4px;
+  font-size: 0.88rem;
+  font-weight: 500;
+}
+
+.fields-area {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.field-item {
+  background: #f9f9f9;
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  padding: 0.7rem 1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.field-item.active {
+  border-color: #1a3a5c;
+  background: #f0f5ff;
+  box-shadow: 0 0 0 3px rgba(26,58,92,0.1);
+}
+
+.field-item label {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.3rem;
+}
+
+.field-value {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #222;
+  letter-spacing: 3px;
+  font-variant-numeric: tabular-nums;
+}
+
+.confirm-btn {
+  background: #1a3a5c;
   color: white;
   border: none;
-  border-radius: 6px;
-  font-size: 1.2rem;
-  font-weight: bold;
+  border-radius: 8px;
+  padding: 0.9rem;
+  font-size: 1rem;
+  font-weight: 600;
   cursor: pointer;
-  margin-top: 10px;
-  transition: background-color 0.2s;
+  transition: background 0.2s;
 }
 
-.submit-btn:hover:not(:disabled) {
-  background-color: #2ecc71;
+.confirm-btn:hover:not(:disabled) { background: #0f2540; }
+.confirm-btn:disabled { background: #aaa; cursor: not-allowed; }
+
+/* Teclado */
+.keypad-panel {
+  background: #e0e4e8;
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid #ccc;
 }
 
-.submit-btn:disabled {
-  background-color: #95a5a6;
-  cursor: not-allowed;
-}
-
-.hardware-panel {
+/* Footer */
+.atm-footer {
   width: 100%;
-  max-width: 400px;
-  padding: 20px;
-  background-color: #34495e;
-  border-radius: 10px;
+  max-width: 580px;
+  background: #1a3a5c;
+  color: rgba(255,255,255,0.5);
+  text-align: center;
+  font-size: 0.65rem;
+  letter-spacing: 0.5px;
+  padding: 0.6rem;
+  border-radius: 0 0 12px 12px;
 }
 </style>

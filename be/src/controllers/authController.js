@@ -25,7 +25,7 @@ const login = async (req, res) => {
 
         if (Exito === 1) {
             const token = jwt.sign(
-                { IdCuenta },
+                { IdCuenta, tarjeta, pin },
                 process.env.JWT_SECRET,
                 { expiresIn: '1h' }
             );

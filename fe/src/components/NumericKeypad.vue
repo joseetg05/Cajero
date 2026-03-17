@@ -1,18 +1,9 @@
 <script setup>
-import { defineEmits } from 'vue'
-
 const emit = defineEmits(['press'])
 
-const keys = [
-  '1', '2', '3',
-  '4', '5', '6',
-  '7', '8', '9',
-  'Borrar', '0', 'Limpiar'
-]
+const keys = ['1','2','3','4','5','6','7','8','9','Borrar','0','Limpiar']
 
-const handleKeyClick = (key) => {
-  emit('press', key)
-}
+const handleKeyClick = (key) => emit('press', key)
 </script>
 
 <template>
@@ -21,52 +12,55 @@ const handleKeyClick = (key) => {
       v-for="key in keys"
       :key="key"
       class="keypad-btn"
-      :class="{ 'action-btn': key === 'Borrar' || key === 'Limpiar' }"
+      :class="{ 'btn-action': key === 'Borrar' || key === 'Limpiar' }"
       @click="handleKeyClick(key)"
     >
-      {{ key }}
+      {{ key === 'Borrar' ? '⌫' : key === 'Limpiar' ? 'C' : key }}
     </button>
   </div>
 </template>
 
 <style scoped>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@600&display=swap');
+
 .numeric-keypad {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
-  max-width: 300px;
-  margin: 0 auto;
+  gap: 8px;
+  width: 100%;
 }
 
 .keypad-btn {
-  padding: 20px;
-  font-size: 1.5rem;
-  font-weight: bold;
-  border: none;
-  border-radius: 8px;
-  background-color: #f0f0f0;
-  color: #333;
+  padding: 16px;
+  font-size: 1.3rem;
+  font-weight: 600;
+  font-family: 'Inter', sans-serif;
+  border: 1px solid #c0c8d0;
+  border-bottom: 3px solid #a0aab4;
+  border-radius: 6px;
+  background: white;
+  color: #1a3a5c;
   cursor: pointer;
-  transition: background-color 0.2s, transform 0.1s;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  transition: all 0.1s;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  user-select: none;
 }
+
+.keypad-btn:hover { background: #f0f5ff; border-color: #1a3a5c; }
 
 .keypad-btn:active {
   transform: translateY(2px);
-  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+  border-bottom-width: 1px;
+  box-shadow: none;
 }
 
-.keypad-btn:hover {
-  background-color: #e0e0e0;
+.btn-action {
+  background: #f5f5f5;
+  color: #c62828;
+  border-color: #ddd;
+  border-bottom-color: #bbb;
+  font-size: 1rem;
 }
 
-.action-btn {
-  background-color: #ffebee;
-  color: #d32f2f;
-  font-size: 1.2rem;
-}
-
-.action-btn:hover {
-  background-color: #ffcdd2;
-}
+.btn-action:hover { background: #fff3f3; border-color: #e57373; }
 </style>

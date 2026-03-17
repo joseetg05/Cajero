@@ -1,228 +1,203 @@
-<template>
-  <div class="formulario-transaccion">
-    
-    <!-- Bloque de Errores (Task 4.1) -->
-    <div v-if="errorMsg" class="error-msg">
-      {{ errorMsg }}
-    </div>
-    
-    <div class="input-group">
-      <label for="monto">Monto de la transacción</label>
-      <!-- Task 3.1 & 4.2 -->
-      <input 
-        id="monto" 
-        type="number" 
-        class="monto-input" 
-        v-model.number="monto"
-        :disabled="isLoading"
-        placeholder="0.00"
-        min="0"
-      />
-    </div>
-
-    <!-- Botones predefinidos (Task 1.2, 2.3 & 4.2) -->
-    <div class="quick-amounts">
-      <button class="amount-btn" :disabled="isLoading" @click="setMonto(2000)">$2,000</button>
-      <button class="amount-btn" :disabled="isLoading" @click="setMonto(5000)">$5,000</button>
-      <button class="amount-btn" :disabled="isLoading" @click="setMonto(10000)">$10,000</button>
-      <button class="amount-btn" :disabled="isLoading" @click="setMonto(20000)">$20,000</button>
-    </div>
-
-    <!-- Task 3.1, 3.2, 3.3 & 4.2 -->
-    <button 
-      class="submit-btn" 
-      type="button" 
-      :disabled="monto <= 0 || isLoading"
-      @click="handleSubmit"
-    >
-      <span v-if="isLoading" class="spinner"></span>
-      <span v-else>{{ botonTexto }}</span>
-    </button>
-  </div>
-</template>
-
 <script setup>
 import { ref, computed } from 'vue'
+import { useCuentaStore } from '../stores/cuenta'
+import NumericKeypad from './NumericKeypad.vue'
 
-// Task 2.1 & 3.3 prop para la accion
 const props = defineProps({
-  tipo: {
-    type: String,
-    required: true,
-    validator: (value) => ['retiro', 'deposito'].includes(value)
-  },
-  action: {
-    type: Function,
-    required: true
-  }
+  tipo: { type: String, required: true, validator: (v) => ['retiro', 'deposito'].includes(v) },
+  action: { type: Function, required: true }
 })
 
-// Task 2.2: Refs
-const monto = ref()
+const cuentaStore = useCuentaStore()
+const monto = ref(0)
 const isLoading = ref(false)
 const errorMsg = ref('')
 
-// Task 3.2: Texto dinámico
-const botonTexto = computed(() => {
-  return props.tipo === 'retiro' ? 'Retirar' : 'Depositar'
+const botonTexto = computed(() => props.tipo === 'retiro' ? 'Confirmar Retiro' : 'Confirmar Depósito')
+
+const displayMonto = computed(() => {
+  if (!monto.value) return `${cuentaStore.moneda} 0`
+  return `${cuentaStore.moneda} ${monto.value.toLocaleString('es-MX')}`
 })
 
-// Task 2.3: Función de botones quick
-const setMonto = (cantidad) => {
-  monto.value = cantidad
+const setMonto = (cantidad) => { monto.value = cantidad; errorMsg.value = '' }
+
+const handleKeypadPress = (key) => {
+  let current = (monto.value || 0).toString()
+  if (key === 'Limpiar') { monto.value = 0; return }
+  if (key === 'Borrar') {
+    monto.value = current.length <= 1 ? 0 : parseInt(current.slice(0, -1))
+    return
+  }
+  if (current.length < 9) {
+    monto.value = monto.value === 0 ? parseInt(key) : parseInt(current + key)
+  }
 }
 
-// Task 3.3 & 4.2: Manejo del submit
 const handleSubmit = async () => {
-  if (monto.value <= 0) return
-  
+  if (!monto.value || monto.value <= 0) return
   errorMsg.value = ''
   isLoading.value = true
-  
   try {
-    // LLamamos la función inyectada (padre) esperando una Promesa
     await props.action(monto.value)
-    // Si la transaccion fue exitosa limpiamos el campo
     monto.value = 0
   } catch (err) {
-    errorMsg.value = err.response?.data?.message || err.message || 'Error procesando la transacción.'
+    errorMsg.value = err.response?.data?.error || err.message || 'Error procesando la transacción.'
   } finally {
     isLoading.value = false
   }
 }
 </script>
 
+<template>
+  <div class="form-area">
+    <!-- Display del monto -->
+    <div class="amount-section">
+      <label class="section-label">Monto a {{ tipo === 'retiro' ? 'retirar' : 'depositar' }}</label>
+      <div class="amount-display" :class="{ 'has-value': monto > 0 }">
+        {{ displayMonto }}
+      </div>
+    </div>
+
+    <div v-if="errorMsg" class="error-box">
+      {{ errorMsg }}
+    </div>
+
+    <!-- Accesos rápidos -->
+    <div class="quick-section">
+      <span class="section-label">Montos rápidos</span>
+      <div class="quick-grid">
+        <button v-for="q in [2000, 5000, 10000, 20000]" :key="q"
+          class="quick-btn" :disabled="isLoading" @click="setMonto(q)">
+          {{ cuentaStore.moneda }} {{ q.toLocaleString() }}
+        </button>
+      </div>
+    </div>
+
+    <!-- Teclado + confirmar -->
+    <div class="input-area">
+      <NumericKeypad @press="handleKeypadPress" />
+      <button class="confirm-btn" :disabled="!monto || monto <= 0 || isLoading" @click="handleSubmit">
+        <span v-if="isLoading" class="spinner"></span>
+        <span v-else>{{ botonTexto }}</span>
+      </button>
+    </div>
+  </div>
+</template>
+
 <style scoped>
-.formulario-transaccion {
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+.form-area {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
-  background-color: #1e1e1e;
-  padding: 2rem;
-  border-radius: 12px;
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
-  width: 100%;
-  max-width: 400px;
-  margin: 0 auto;
+  gap: 1.25rem;
   font-family: 'Inter', sans-serif;
-  color: #fff;
 }
 
-.error-msg {
-  background-color: rgba(255, 82, 82, 0.1);
-  color: #ff5252;
-  padding: 1rem;
-  border: 1px solid #ff5252;
+.section-label {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.4rem;
+}
+
+.amount-section { display: flex; flex-direction: column; }
+
+.amount-display {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #999;
+  background: #f9f9f9;
+  border: 2px solid #ddd;
   border-radius: 8px;
-  font-weight: 500;
-  text-align: center;
+  padding: 0.7rem 1rem;
+  text-align: right;
+  transition: all 0.2s;
+  font-variant-numeric: tabular-nums;
 }
 
-.input-group {
+.amount-display.has-value {
+  color: #1a3a5c;
+  border-color: #1a3a5c;
+  background: #f0f5ff;
+}
+
+.error-box {
+  background: #fff3f3;
+  border: 1px solid #e57373;
+  border-left: 4px solid #d32f2f;
+  color: #b71c1c;
+  padding: 0.65rem 0.9rem;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.quick-section { display: flex; flex-direction: column; }
+
+.quick-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+
+.quick-btn {
+  padding: 0.6rem 0.25rem;
+  background: white;
+  border: 1px solid #dde2e8;
+  border-radius: 6px;
+  color: #1a3a5c;
+  font-size: 0.8rem;
+  font-weight: 600;
+  font-family: 'Inter', sans-serif;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.quick-btn:hover:not(:disabled) {
+  background: #f0f5ff;
+  border-color: #1a3a5c;
+}
+
+.quick-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.input-area {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-}
-
-.input-group label {
-  font-size: 1rem;
-  color: #a0a0a0;
-}
-
-.monto-input {
-  background-color: #2c2c2c;
-  border: 1px solid #444;
-  border-radius: 8px;
-  padding: 1rem;
-  font-size: 1.5rem;
-  color: #fff;
-  text-align: right;
-  transition: border-color 0.3s ease;
-}
-
-.monto-input:focus {
-  outline: none;
-  border-color: #00bcd4;
-}
-
-/* Ocultar flechas del input number */
-.monto-input::-webkit-outer-spin-button,
-.monto-input::-webkit-inner-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
-.monto-input[type=number] {
-  -moz-appearance: textfield;
-}
-
-.quick-amounts {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
   gap: 0.75rem;
 }
 
-.amount-btn {
-  background-color: #333;
-  color: #00bcd4;
-  border: 1px solid #444;
-  border-radius: 8px;
-  padding: 0.75rem;
-  font-size: 1.1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.amount-btn:hover:not(:disabled) {
-  background-color: #444;
-  border-color: #00bcd4;
-}
-
-.submit-btn {
-  background-color: #00bcd4;
-  color: #121212;
+.confirm-btn {
+  width: 100%;
+  padding: 0.9rem;
+  background: #1a3a5c;
+  color: white;
   border: none;
   border-radius: 8px;
-  padding: 1rem;
-  font-size: 1.2rem;
-  font-weight: bold;
+  font-size: 1rem;
+  font-weight: 600;
+  font-family: 'Inter', sans-serif;
   cursor: pointer;
-  transition: background-color 0.3s ease, opacity 0.3s ease;
-  text-transform: uppercase;
-  margin-top: 1rem;
-  position: relative;
+  transition: background 0.2s;
   display: flex;
-  justify-content: center;
   align-items: center;
-  min-height: 52px;
+  justify-content: center;
+  min-height: 50px;
 }
 
-.submit-btn:hover:not(:disabled) {
-  background-color: #0097a7;
-}
+.confirm-btn:hover:not(:disabled) { background: #0f2540; }
+.confirm-btn:disabled { background: #aaa; cursor: not-allowed; }
 
-.submit-btn:disabled {
-  background-color: #555;
-  color: #888;
-  cursor: not-allowed;
-}
-
-.amount-btn:disabled, .monto-input:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-/* Spinner animado */
 .spinner {
-  width: 24px;
-  height: 24px;
-  border: 3px solid rgba(18, 18, 18, 0.3);
+  width: 20px; height: 20px;
+  border: 3px solid rgba(255,255,255,0.3);
+  border-top-color: white;
   border-radius: 50%;
-  border-top-color: #121212;
-  animation: spin 1s ease-in-out infinite;
+  animation: spin 0.8s linear infinite;
 }
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
+@keyframes spin { to { transform: rotate(360deg); } }
 </style>
