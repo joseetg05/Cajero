@@ -1,18 +1,24 @@
 require('dotenv').config();
 const sql = require('mssql/msnodesqlv8');
 
-const connString = `Driver={ODBC Driver 17 for SQL Server};Server=${process.env.DB_SERVER}\\${process.env.DB_INSTANCE};Database=${process.env.DB_NAME};Trusted_Connection=yes;Encrypt=yes;TrustServerCertificate=yes;`;
-
 const dbSettings = {
-    connectionString: connString
+    connectionString: `Driver={ODBC Driver 17 for SQL Server};Server=${process.env.DB_SERVER}\\${process.env.DB_INSTANCE};Database=${process.env.DB_NAME};Trusted_Connection=yes;`,
+    driver: 'msnodesqlv8'
 };
+
+let pool;
 
 const getConnection = async () => {
     try {
-        const pool = await sql.connect(dbSettings);
+        if (!pool) {
+            pool = new sql.ConnectionPool(dbSettings);
+            await pool.connect();
+        } else if (!pool.connected) {
+             await pool.connect();
+        }
         return pool;
     } catch (error) {
-        console.error('Error connectando a la base de datos:', error);
+        pool = null; // Reset para reintento
         throw error;
     }
 };

@@ -20,10 +20,10 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="mov in movimientos" :key="mov.id">
-            <td>{{ formatDate(mov.fecha) }}</td>
-            <td :class="getTypeClass(mov.tipo)">{{ formatType(mov.tipo) }}</td>
-            <td :class="getTypeClass(mov.tipo)">${{ mov.monto.toFixed(2) }}</td>
+          <tr v-for="mov in movimientos" :key="mov.ID_MOVIMIENTO">
+            <td>{{ formatDate(mov.FECHA_HORA) }}</td>
+            <td :class="getTypeClass(mov.Tipo)">{{ formatType(mov.Tipo) }}</td>
+            <td :class="getTypeClass(mov.Tipo)">${{ mov.MONTO.toFixed(2) }}</td>
           </tr>
           
           <tr v-if="movimientos.length === 0">
@@ -40,7 +40,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import axios from 'axios'
+import api from '../services/api'
 
 const router = useRouter()
 const movimientos = ref([])
@@ -51,27 +51,14 @@ const handleBack = () => {
   router.push('/dashboard')
 }
 
-// Nota: se asume que existe un endpoint con este path en el backend. 
-// De acuerdo con el requerimiento debe consumirlo.
 const fetchMovimientos = async () => {
   loading.value = true
   error.value = null
   try {
-    // Si la API en 'be/src/routes/atm.js' tiene un GET para historial/transacciones:
-    const response = await axios.get('http://localhost:3000/api/atm/transactions', {
-      withCredentials: true // O enviar el token si se aplica
-    })
-    
-    // Normalizamos el mapeo suponiendo la estructura devuelta
-    movimientos.value = response.data.transactions || response.data || []
+    const response = await api.get('/atm/transactions')
+    movimientos.value = response.data || []
   } catch (err) {
-    console.error('Error fetching transactions:', err)
-    error.value = 'No se pudo cargar el historial de movimientos.'
-    // Para propósitos de prueba visual si el endpoint no está implementado
-    // movimientos.value = [
-    //   { id: 1, fecha: new Date().toISOString(), tipo: 'DEPOSITO', monto: 150.00 },
-    //   { id: 2, fecha: new Date(Date.now() - 86400000).toISOString(), tipo: 'RETIRO', monto: 50.00 }
-    // ]
+    error.value = 'No se pudo cargar el historial.'
   } finally {
     loading.value = false
   }
@@ -88,13 +75,14 @@ const formatDate = (dateString) => {
 
 const formatType = (tipo) => {
   if (!tipo) return 'Desconocido'
-  return tipo.toUpperCase() === 'DEPOSITO' ? 'Depósito' : 
-         tipo.toUpperCase() === 'RETIRO' ? 'Retiro' : tipo
+  const t = tipo.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase()
+  return t === 'DEPOSITO' ? 'Depósito' : 
+         t === 'RETIRO' ? 'Retiro' : tipo
 }
 
 const getTypeClass = (tipo) => {
   if (!tipo) return ''
-  const t = tipo.toUpperCase()
+  const t = tipo.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase()
   if (t === 'DEPOSITO') return 'text-deposit'
   if (t === 'RETIRO') return 'text-withdrawal'
   return ''
