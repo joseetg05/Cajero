@@ -1,5 +1,4 @@
-const sql = require('mssql');
-const { getConnection } = require('../db');
+const { sql, getConnection } = require('../db');
 
 const withdraw = async (req, res) => {
     const { idCuenta, monto } = req.body;
@@ -20,14 +19,10 @@ const withdraw = async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Error en withdraw:', error);
-
-        // Manejar el error proveniente de SQL Server  (ej. Saldo insuficiente)
-        if (error.originalError && error.originalError.info && error.originalError.info.message) {
+        if (error.originalError?.info?.message) {
             return res.status(400).json({ error: error.originalError.info.message });
         }
-
-        res.status(500).json({ error: 'Error interno del servidor al procesar el retiro.' });
+        res.status(500).json({ error: 'Error interno al procesar el retiro.' });
     }
 };
 
@@ -50,18 +45,32 @@ const deposit = async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Error en deposit:', error);
-
-        // Manejar el error proveniente de SQL Server
-        if (error.originalError && error.originalError.info && error.originalError.info.message) {
+        if (error.originalError?.info?.message) {
             return res.status(400).json({ error: error.originalError.info.message });
         }
+        res.status(500).json({ error: 'Error interno al procesar el depósito.' });
+    }
+};
 
-        res.status(500).json({ error: 'Error interno del servidor al procesar el depósito.' });
+const getTransactions = async (req, res) => {
+    const { IdCuenta } = req.user;
+
+    try {
+        const pool = await getConnection();
+        const request = pool.request();
+
+        request.input('IdCuenta', sql.Int, IdCuenta);
+
+        const result = await request.execute('sp_ConsultarMovimientos');
+
+        res.status(200).json(result.recordset);
+    } catch (error) {
+        res.status(500).json({ error: 'Error interno al consultar movimientos.' });
     }
 };
 
 module.exports = {
     withdraw,
-    deposit
+    deposit,
+    getTransactions
 };
